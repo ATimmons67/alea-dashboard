@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALEA Dashboard</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3250;
+    --accent: #4f6ef7;
+    --accent2: #6ee7b7;
+    --danger: #f87171;
+    --warning: #fbbf24;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --success: #34d399;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
+  
+  /* NAV */
+  nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
+  .nav-logo { font-weight: 700; font-size: 18px; color: var(--accent); letter-spacing: 1px; }
+  .nav-tabs { display: flex; gap: 4px; }
+  .nav-tab { padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; color: var(--text2); border: none; background: none; transition: all .2s; }
+  .nav-tab:hover { background: var(--surface2); color: var(--text); }
+  .nav-tab.active { background: var(--accent); color: #fff; }
+  .nav-user { font-size: 13px; color: var(--text2); }
+
+  /* LAYOUT */
+  .page { display: none; padding: 24px; max-width: 1200px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* CARDS */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .card-title { font-weight: 600; font-size: 15px; }
+
+  /* BUTTONS */
+  .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 500; transition: all .2s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #3d5be0; }
+  .btn-success { background: var(--success); color: #000; }
+  .btn-success:hover { background: #2cb87e; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #e05555; }
+  .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* BADGES */
+  .badge { padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-draft { background: #1e3a5f; color: #60a5fa; }
+  .badge-submitted { background: #1a3a2a; color: var(--success); }
+  .badge-warning { background: #3a2a0a; color: var(--warning); }
+
+  /* TABLE */
+  .table { width: 100%; border-collapse: collapse; }
+  .table th { text-align: left; font-size: 12px; color: var(--text2); padding: 10px 12px; border-bottom: 1px solid var(--border); font-weight: 500; }
+  .table td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .table tr:last-child td { border-bottom: none; }
+  .table tr:hover td { background: var(--surface2); }
+  .table tr { cursor: pointer; }
+
+  /* SEARCH / FILTERS */
+  .toolbar { display: flex; gap: 10px; margin-bottom: 16px; align-items: center; }
+  .search-input { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 8px; font-size: 13px; width: 280px; }
+  .search-input:focus { outline: none; border-color: var(--accent); }
+  select.filter { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 8px; font-size: 13px; }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 200; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 640px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
+  .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 20px; }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+  /* DETAIL SECTIONS */
+  .section-title { font-size: 12px; color: var(--text2); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .detail-item label { font-size: 11px; color: var(--text2); display: block; margin-bottom: 3px; }
+  .detail-item span { font-size: 14px; }
+
+  /* EXPENSE ROWS */
+  .expense-row { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--surface2); border-radius: 8px; margin-bottom: 8px; }
+  .expense-name { font-weight: 500; font-size: 14px; }
+  .expense-amount { font-size: 15px; font-weight: 600; color: var(--accent2); }
+  .expense-system { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  /* STAT CARDS */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .stat-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+  .stat-value { font-size: 22px; font-weight: 700; }
+  .stat-value.blue { color: var(--accent); }
+  .stat-value.green { color: var(--success); }
+  .stat-value.yellow { color: var(--warning); }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-size: 13px; z-index: 999; transform: translateY(100px); transition: transform .3s; }
+  .toast.show { transform: translateY(0); }
+  .toast.success { border-color: var(--success); }
+  .toast.error { border-color: var(--danger); }
+
+  /* LOADING */
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-state { text-align: center; padding: 40px; color: var(--text2); }
+
+  /* XERO LINK */
+  .xero-link { display: inline-flex; align-items: center; gap: 6px; color: #00b4d8; font-size: 13px; text-decoration: none; }
+  .xero-link:hover { text-decoration: underline; }
+
+  /* EMPTY STATE */
+  .empty { text-align: center; padding: 48px; color: var(--text2); }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+  /* PO specific */
+  .po-status-pending { color: var(--warning); }
+  .po-status-sent { color: var(--accent); }
+  .po-status-received { color: var(--success); }
+
+  .flex { display: flex; }
+  .gap-2 { gap: 8px; }
+  .ml-auto { margin-left: auto; }
+  .mt-2 { margin-top: 8px; }
+  .text-sm { font-size: 13px; }
+  .text-xs { font-size: 11px; }
+  .text-muted { color: var(--text2); }
+  .text-right { text-align: right; }
+  .font-bold { font-weight: 700; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">ALEA</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('projects')">Projects</button>
+    <button class="nav-tab" onclick="showPage('purchase-orders')">Purchase Orders</button>
+    <button class="nav-tab" onclick="showPage('settings')">Settings</button>
+  </div>
+  <div class="nav-user" id="nav-user">Loading...</div>
+</nav>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- PROJECTS PAGE -->
+<div class="page active" id="page-projects">
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Total Projects</div><div class="stat-value blue" id="stat-total">—</div></div>
+    <div class="stat"><div class="stat-label">Draft</div><div class="stat-value yellow" id="stat-draft">—</div></div>
+    <div class="stat"><div class="stat-label">Submitted</div><div class="stat-value green" id="stat-submitted">—</div></div>
+    <div class="stat"><div class="stat-label">Xero Accounts</div><div class="stat-value blue" id="stat-accounts">—</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Projects</div>
+      <button class="btn btn-primary btn-sm" onclick="syncDtools()">↻ Sync D-Tools</button>
+    </div>
+    <div class="toolbar">
+      <input class="search-input" placeholder="Search projects..." oninput="filterProjects(this.value)" id="project-search">
+      <select class="filter" onchange="filterProjects()" id="stage-filter">
+        <option value="">All Stages</option>
+        <option value="draft">Draft</option>
+        <option value="submitted">Submitted</option>
+      </select>
+    </div>
+    <div id="projects-table">
+      <div class="loading-state"><div class="spinner"></div><br>Loading projects...</div>
+    </div>
+  </div>
+</div>
+
+<!-- PURCHASE ORDERS PAGE -->
+<div class="page" id="page-purchase-orders">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Purchase Orders</div>
+      <button class="btn btn-primary btn-sm" onclick="loadPOs()">↻ Refresh</button>
+    </div>
+    <div id="po-table">
+      <div class="loading-state"><div class="spinner"></div><br>Loading purchase orders...</div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS PAGE -->
+<div class="page" id="page-settings">
+  <div class="card">
+    <div class="card-header"><div class="card-title">Xero Accounts</div></div>
+    <div id="xero-accounts-list">
+      <div class="loading-state"><div class="spinner"></div><br>Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- PROJECT DETAIL MODAL -->
+<div class="modal-overlay" id="project-modal">
+  <div class="modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div class="modal-title" id="modal-project-name">Project</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('project-modal')">✕</button>
+    </div>
+    <div id="modal-project-content">
+      <div class="loading-state"><div class="spinner"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PO DETAIL MODAL -->
+<div class="modal-overlay" id="po-modal">
+  <div class="modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div class="modal-title" id="modal-po-name">Purchase Order</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('po-modal')">✕</button>
+    </div>
+    <div id="modal-po-content">
+      <div class="loading-state"><div class="spinner"></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'https://apidashboard.aleagroup.co/v1';
+let allProjects = [];
+let allPOs = [];
+let xeroAccounts = [];
+
+// ── UTILS ──────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event.target.classList.add('active');
+  if (name === 'purchase-orders' && allPOs.length === 0) loadPOs();
+  if (name === 'settings') loadSettings();
+}
+
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function fmt(val) {
+  if (!val && val !== 0) return '—';
+  return '$' + Number(val).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+async function api(path, opts = {}) {
+  const r = await fetch(API + path, { headers: {'Content-Type': 'application/json'}, ...opts });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+// ── PROJECTS ──────────────────────────────────────────
+async function loadProjects() {
+  try {
+    const data = await api('/projects?page=1&limit=200&sort_by=name&sort_order=asc');
+    allProjects = data.projects || data.items || data || [];
+    renderProjects(allProjects);
+    // Stats
+    const draft = allProjects.filter(p => p.stage === 'draft').length;
+    const submitted = allProjects.filter(p => p.stage === 'submitted').length;
+    document.getElementById('stat-total').textContent = allProjects.length;
+    document.getElementById('stat-draft').textContent = draft;
+    document.getElementById('stat-submitted').textContent = submitted;
+  } catch(e) {
+    document.getElementById('projects-table').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>Failed to load projects</div>`;
+  }
+}
+
+function renderProjects(projects) {
+  if (!projects.length) {
+    document.getElementById('projects-table').innerHTML = `<div class="empty"><div class="empty-icon">📋</div>No projects found</div>`;
+    return;
+  }
+  document.getElementById('projects-table').innerHTML = `
+    <table class="table">
+      <thead><tr>
+        <th>Project Name</th>
+        <th>Client</th>
+        <th>Stage</th>
+        <th>Total Price</th>
+        <th>Actions</th>
+      </tr></thead>
+      <tbody>
+        ${projects.map(p => `
+          <tr onclick="openProject('${p.d_tools_project_id || p.id}')">
+            <td><strong>${p.name || '—'}</strong></td>
+            <td class="text-muted">${p.client_name || p.client || '—'}</td>
+            <td><span class="badge badge-${p.stage}">${p.stage}</span></td>
+            <td>${fmt(p.total_price)}</td>
+            <td onclick="event.stopPropagation()">
+              ${p.stage === 'draft' ? `<button class="btn btn-primary btn-sm" onclick="seedProject('${p.d_tools_project_id || p.id}', this)">Seed to Xero</button>` : 
+                `<button class="btn btn-ghost btn-sm" onclick="openProject('${p.d_tools_project_id || p.id}')">View Details</button>`}
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function filterProjects(val) {
+  const search = (val || document.getElementById('project-search').value || '').toLowerCase();
+  const stage = document.getElementById('stage-filter').value;
+  const filtered = allProjects.filter(p => {
+    const matchSearch = !search || (p.name || '').toLowerCase().includes(search) || (p.client_name || '').toLowerCase().includes(search);
+    const matchStage = !stage || p.stage === stage;
+    return matchSearch && matchStage;
+  });
+  renderProjects(filtered);
+}
+
+async function openProject(id) {
+  document.getElementById('modal-project-name').textContent = 'Loading...';
+  document.getElementById('modal-project-content').innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+  openModal('project-modal');
+  try {
+    const p = await api(`/projects/${id}`);
+    document.getElementById('modal-project-name').textContent = p.name;
+    
+    // Build estimated expenses from products grouped by system
+    const systemTotals = {};
+    (p.products || []).forEach(prod => {
+      const sys = prod.system_name || 'Materials';
+      systemTotals[sys] = (systemTotals[sys] || 0) + (prod.total_price || 0);
+    });
+
+    const expenseRows = Object.entries(systemTotals).map(([name, amt]) => `
+      <div class="expense-row">
+        <div>
+          <div class="expense-name">${name}</div>
+          <div class="expense-system">Estimated Expense Bucket</div>
+        </div>
+        <div class="expense-amount">${fmt(amt)}</div>
+      </div>`).join('') || '<div class="text-muted text-sm">No products found</div>';
+
+    const laborRows = (p.labor_types || p.laborTypes || []).map(l => `
+      <div class="expense-row">
+        <div>
+          <div class="expense-name">${l.labor_type_name || l.name}</div>
+          <div class="expense-system">${l.time || 0} hrs @ ${fmt(l.unit_price || l.rate)}/hr</div>
+        </div>
+        <div class="expense-amount">${fmt(l.total_price || l.total)}</div>
+      </div>`).join('') || '<div class="text-muted text-sm">No labor items found</div>';
+
+    const xeroProjectId = p.xero_project_id || (p.xero_projects && p.xero_projects[0]?.xero_project_id);
+    const xeroLink = xeroProjectId 
+      ? `<a class="xero-link" href="https://go.xero.com/projects/projects/${xeroProjectId}/tasks" target="_blank">↗ Open in Xero</a>`
+      : '<span class="text-muted text-sm">Not yet seeded to Xero</span>';
+
+    document.getElementById('modal-project-content').innerHTML = `
+      <div class="detail-grid">
+        <div class="detail-item"><label>Stage</label><span><span class="badge badge-${p.stage}">${p.stage}</span></span></div>
+        <div class="detail-item"><label>Client</label><span>${p.client_name || p.client || '—'}</span></div>
+        <div class="detail-item"><label>Total Price</label><span>${fmt(p.total_price)}</span></div>
+        <div class="detail-item"><label>Xero</label><span>${xeroLink}</span></div>
+      </div>
+
+      <hr class="divider">
+      <div class="section-title">📦 Estimated Expenses (Enter in Xero manually)</div>
+      <div style="margin-bottom:16px">${expenseRows}</div>
+
+      <hr class="divider">
+      <div class="section-title">🔧 Labor Tasks</div>
+      <div style="margin-bottom:16px">${laborRows}</div>
+
+      <div class="modal-footer">
+        ${p.stage === 'draft' ? `<button class="btn btn-primary" onclick="seedProject('${id}', this); closeModal('project-modal')">Seed to Xero</button>` : ''}
+        ${xeroProjectId ? `<a class="btn btn-ghost" href="https://go.xero.com/projects/projects/${xeroProjectId}/tasks" target="_blank">Open in Xero ↗</a>` : ''}
+        <button class="btn btn-ghost" onclick="closeModal('project-modal')">Close</button>
+      </div>`;
+  } catch(e) {
+    document.getElementById('modal-project-content').innerHTML = `<div class="empty">Failed to load project details</div>`;
+  }
+}
+
+async function seedProject(id, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = 'Seeding...'; }
+  try {
+    // Stage it first
+    await api(`/projects/${id}/stage`, {method: 'POST'});
+    // Then seed
+    await api('/projects/seed', {method: 'POST', body: JSON.stringify({d_tools_project_id: id})});
+    toast('Project seeded to Xero successfully!', 'success');
+    loadProjects();
+  } catch(e) {
+    toast('Seed failed: ' + e.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Seed to Xero'; }
+  }
+}
+
+async function syncDtools() {
+  toast('Syncing D-Tools...', 'success');
+  try {
+    await api('/dtools/sync', {method: 'POST'});
+    toast('D-Tools sync complete!', 'success');
+    setTimeout(loadProjects, 2000);
+  } catch(e) {
+    toast('Sync failed', 'error');
+  }
+}
+
+// ── PURCHASE ORDERS ────────────────────────────────────
+async function loadPOs() {
+  try {
+    const data = await api('/purchase-orders');
+    allPOs = data.purchase_orders || data.items || data || [];
+    renderPOs(allPOs);
+  } catch(e) {
+    document.getElementById('po-table').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>Failed to load purchase orders</div>`;
+  }
+}
+
+function renderPOs(pos) {
+  if (!pos.length) {
+    document.getElementById('po-table').innerHTML = `<div class="empty"><div class="empty-icon">📄</div>No purchase orders found</div>`;
+    return;
+  }
+  document.getElementById('po-table').innerHTML = `
+    <table class="table">
+      <thead><tr>
+        <th>PO Number</th>
+        <th>Project</th>
+        <th>Vendor</th>
+        <th>Amount</th>
+        <th>Status</th>
+      </tr></thead>
+      <tbody>
+        ${pos.map(po => `
+          <tr onclick="openPO('${po.id}')">
+            <td><strong>${po.po_number || po.number || '—'}</strong></td>
+            <td class="text-muted">${po.project_name || '—'}</td>
+            <td class="text-muted">${po.vendor_name || po.vendor || '—'}</td>
+            <td>${fmt(po.total_amount || po.amount)}</td>
+            <td><span class="badge badge-${po.status === 'sent' ? 'submitted' : 'draft'}">${po.status || 'draft'}</span></td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+async function openPO(id) {
+  document.getElementById('modal-po-name').textContent = 'Purchase Order';
+  document.getElementById('modal-po-content').innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+  openModal('po-modal');
+  try {
+    const po = await api(`/purchase-orders/${id}`);
+    document.getElementById('modal-po-name').textContent = po.po_number || po.number || 'Purchase Order';
+    document.getElementById('modal-po-content').innerHTML = `
+      <div class="detail-grid">
+        <div class="detail-item"><label>Project</label><span>${po.project_name || '—'}</span></div>
+        <div class="detail-item"><label>Vendor</label><span>${po.vendor_name || '—'}</span></div>
+        <div class="detail-item"><label>Amount</label><span>${fmt(po.total_amount)}</span></div>
+        <div class="detail-item"><label>Status</label><span class="badge badge-${po.status === 'sent' ? 'submitted' : 'draft'}">${po.status || 'draft'}</span></div>
+      </div>
+      <hr class="divider">
+      <div class="section-title">Line Items</div>
+      <table class="table">
+        <thead><tr><th>Item</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead>
+        <tbody>
+          ${(po.items || po.line_items || []).map(item => `
+            <tr>
+              <td>${item.name || item.description || '—'}</td>
+              <td>${item.quantity || 1}</td>
+              <td>${fmt(item.unit_price)}</td>
+              <td>${fmt(item.total_price || item.total)}</td>
+            </tr>`).join('') || '<tr><td colspan="4" class="text-muted">No line items</td></tr>'}
+        </tbody>
+      </table>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('po-modal')">Close</button>
+      </div>`;
+  } catch(e) {
+    document.getElementById('modal-po-content').innerHTML = `<div class="empty">Failed to load PO details</div>`;
+  }
+}
+
+// ── SETTINGS ──────────────────────────────────────────
+async function loadSettings() {
+  try {
+    const data = await api('/xero-accounts');
+    xeroAccounts = data || [];
+    document.getElementById('stat-accounts').textContent = xeroAccounts.length;
+    document.getElementById('xero-accounts-list').innerHTML = xeroAccounts.map(a => `
+      <div class="expense-row">
+        <div>
+          <div class="expense-name">${a.company_name || a.name}</div>
+          <div class="expense-system">Tenant: ${a.tenant_id}</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="badge badge-submitted">Connected</span>
+          <a class="btn btn-ghost btn-sm" href="/v1/auth/xero/reconnect/${a.id}" target="_blank">Reconnect</a>
+        </div>
+      </div>`).join('') || '<div class="text-muted text-sm">No Xero accounts found</div>';
+  } catch(e) {
+    document.getElementById('xero-accounts-list').innerHTML = `<div class="empty">Failed to load accounts</div>`;
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('nav-user').textContent = 'ALEA Group';
+  loadProjects();
+});
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+</script>
+</body>
+</html>
