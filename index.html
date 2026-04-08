@@ -260,7 +260,7 @@ function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
 async function api(path, opts = {}) {
-  const r = await fetch(API + path, { headers: {'Content-Type': 'application/json'}, ...opts });
+  const r = await fetch(API + path, { headers: {'Content-Type': 'application/json', 'Authorization': 'Basic ' + btoa('admin:ALEAadmin25!')}, ...opts });
   if (!r.ok) throw new Error(await r.text());
   return r.json();
 }
